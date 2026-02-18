@@ -1,7 +1,7 @@
 import os
 import requests
 import xml.etree.ElementTree as ET
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Response, jsonify, request, redirect
 
 DEFAULT_FEED_URL = "https://api.dr.dk/podcasts/v1/feeds/hemmeligheder-2"
 
@@ -42,7 +42,6 @@ def health():
         service="dr rss proxy",
         endpoints=[
             "/rss",
-            "/rss?url=...",
             "/rss?format=streamlatest",
             "/rss?url=...&format=streamlatest"
         ],
@@ -58,7 +57,11 @@ def rss():
 
     if format_type == "streamlatest":
         enclosure_url = get_first_enclosure(xml_text)
-        return Response(enclosure_url, mimetype="text/plain")
+
+        if not enclosure_url:
+            return Response("No enclosure found", status=404)
+
+        return redirect(enclosure_url, code=302)
 
     return Response(xml_text, mimetype="application/xml")
 
